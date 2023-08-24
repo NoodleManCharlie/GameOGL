@@ -14,7 +14,7 @@ GLfloat vertices[] =
     //Normal Triangle Vertices
 	-0.5f, -0.5f  * float(sqrt(3)) / 3, 0.0f, // Lower left corner
 	0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Lower right corner
-	0.0f, 0.5f * float(sqrt(3)) * 2 / 63, 0.0f, // Upper corner
+	0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f, // Upper corner
 
     //Extra Triforce vertices
     -0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, //Inner Left
@@ -54,7 +54,7 @@ int main()
 
     glViewport(0, 0, 800, 800);
 
-    Shader shaderProgram("default.vert", "default.frag.txt");
+    Shader shaderProgram("default.vert.txt", "default.frag.txt");
 
 
     VAO VAO1;

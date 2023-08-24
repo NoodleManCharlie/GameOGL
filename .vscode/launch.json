@@ -14,7 +14,7 @@
             "preLaunchTask": "build",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/include/resource files",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb", 
