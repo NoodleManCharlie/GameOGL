@@ -19,6 +19,7 @@
                 "src/Texture.cpp",
                 "src/VBO.cpp",
                 "src/stb.cpp",
+                "src/Camera.cpp",
                 "src/main.cpp",
                 "src/glad.c",
                 "-lglfw3dll",

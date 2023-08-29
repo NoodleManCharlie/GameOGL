@@ -14,13 +14,14 @@
 #include<header files/VBO.h>
 #include<header files/EBO.h>
 #include<header files/Texture.h>
+#include<header files/Camera.h>
 
 const unsigned int width = 800;
 const unsigned int height = 800;
 
 // Vertice coordinates
 GLfloat vertices[] =
-{ //     COORDINATES     /        COLORS      /   TexCoord  //
+{ //     COORDINATES     /        COLORS         /   TexCoord  //
 	-0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,	0.0f, 0.0f,
 	-0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,	5.0f, 0.0f,
 	 0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,	0.0f, 0.0f,
@@ -80,16 +81,13 @@ int main()
     VBO1.Unbind();
     EBO1.Unbind();
 
-    GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
-
     //Texture (Refer to Texture.cpp and Texture.h)
     Texture popCat("Textures/brick.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
     popCat.texUnit(shaderProgram, "tex0", 0);
 
-    float rotation = 0.0f;
-    double prevTime = glfwGetTime();
-
     glEnable(GL_DEPTH_TEST);
+
+    Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
 	// Main while loop
 	while (!glfwWindowShouldClose(window))
@@ -98,35 +96,9 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shaderProgram.Activate();
 
+        camera.Inputs(window);
+        camera.Matrix(45.0f, 0.1f, 100.0f, shaderProgram, "camMatrix");
 
-        double currentTime = glfwGetTime();
-        if (currentTime - prevTime >= 1 /60)
-        {
-            rotation += 0.5f;
-            prevTime = currentTime;
-        }
-
-        //Defining Matrixes
-        glm::mat4 modelMat = glm::mat4(1.0f);
-        glm::mat4 viewMat = glm::mat4(1.0f);
-        glm::mat4 projectMat = glm::mat4(1.0f);
-
-        modelMat = glm::rotate(modelMat, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
-        viewMat = glm::translate(viewMat, glm::vec3(0.0f, -0.5f, -2.0f));
-        projectMat = glm::perspective(glm::radians(45.0f), (float)(width / height), 0.1f, 100.0f);
-
-        //Uniform for Model Matrix
-        int modelLoc = glGetUniformLocation(shaderProgram.ID, "modelMat");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelMat));
-        //Uniform for View Matrix
-        int viewLoc = glGetUniformLocation(shaderProgram.ID, "viewMat");
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMat));
-        //Uniform for Project Matrix
-        int projectLoc = glGetUniformLocation(shaderProgram.ID, "projectMat");
-        glUniformMatrix4fv(projectLoc, 1, GL_FALSE, glm::value_ptr(projectMat));
-
-
-        glUniform1f(uniID, 0.1f);
         popCat.Bind();
 		VAO1.Bind();
 		glDrawElements(GL_TRIANGLES, sizeof(indices)/sizeof(int), GL_UNSIGNED_INT, 0);
