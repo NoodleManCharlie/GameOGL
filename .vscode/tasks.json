@@ -17,6 +17,7 @@
                 "src/VAO.cpp",
                 "src/EBO.cpp",
                 "src/VBO.cpp",
+                "src/stb.cpp",
                 "src/main.cpp",
                 "src/glad.c",
                 "-lglfw3dll",
