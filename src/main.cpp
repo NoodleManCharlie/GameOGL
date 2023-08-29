@@ -5,25 +5,38 @@
 #include <GLFW/glfw3.h>
 #include <stb/stb_image.h>
 
+#include<glm/glm.hpp>
+#include<glm/gtc/matrix_transform.hpp>
+#include<glm/gtc/type_ptr.hpp>
+
 #include<header files/shaderClass.h>
 #include<header files/VAO.h>
 #include<header files/VBO.h>
 #include<header files/EBO.h>
+#include<header files/Texture.h>
+
+const unsigned int width = 800;
+const unsigned int height = 800;
 
 // Vertice coordinates
 GLfloat vertices[] =
-{//      Coordinates                Colors           Texture Vertices
-	-0.5f,  -0.5f, 0.0f,      1.0f, 0.0f,  0.0f,        0.0f, 0.0f,     // Lower left corner
-	-0.5f,   0.5f, 0.0f,      0.8f, 1.0f,  0.0f,        0.0f, 1.0f,     // Upper left corner
-	 0.5f,   0.5f, 0.0f,      0.0f, 0.0f,  1.0f,        1.0f, 1.0f,     // Upper right corner
-     0.5f,  -0.5f, 0.0f,      1.0f, 1.0f,  1.0f,        1.0f, 0.0f,     // Lower right corner
-
+{ //     COORDINATES     /        COLORS      /   TexCoord  //
+	-0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,	0.0f, 0.0f,
+	-0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,	5.0f, 0.0f,
+	 0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,	0.0f, 0.0f,
+	 0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,	5.0f, 0.0f,
+	 0.0f, 0.8f,  0.0f,     0.92f, 0.86f, 0.76f,	2.5f, 5.0f
 };
 
+// Indices for vertices order
 GLuint indices[] =
 {
-    0, 2, 1, //Upper Square
-    0, 3, 2  //Lower Square
+	0, 1, 2,
+	0, 2, 3,
+	0, 1, 4,
+	1, 2, 4,
+	2, 3, 4,
+	3, 0, 4
 };
 
 int main()
@@ -37,7 +50,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     //Create a window and check if the process failed.
-    GLFWwindow* window = glfwCreateWindow(800, 800, "Window is Window", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(width, height, "Window is Window", NULL, NULL);
     if(window == NULL)
     {
         std::cout << "Error in createing the GLFW Window" << std::endl;
@@ -49,7 +62,7 @@ int main()
     //Giving the background a color
     gladLoadGL();
 
-    glViewport(0, 0, 800, 800);
+    glViewport(0, 0, width, height);
 
     Shader shaderProgram("Shaders/default.vert.txt", "Shaders/default.frag.txt");
 
@@ -69,47 +82,54 @@ int main()
 
     GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
 
+    //Texture (Refer to Texture.cpp and Texture.h)
+    Texture popCat("Textures/brick.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+    popCat.texUnit(shaderProgram, "tex0", 0);
 
-    // Texture
-    int widthImg, heightImg, numColCh;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char* bytes = stbi_load("Textures/pop_cat.png", &widthImg, &heightImg, &numColCh, 0);
+    float rotation = 0.0f;
+    double prevTime = glfwGetTime();
 
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-
-    //Telling Open GL how to process when scaling image
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    //Telling Open GL how to process when repeating the image
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, widthImg, heightImg, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    stbi_image_free(bytes);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    GLuint tex0Uni = glGetUniformLocation(shaderProgram.ID, "tex0");
-    shaderProgram.Activate();
-    glUniform1i(tex0Uni, 0);
+    glEnable(GL_DEPTH_TEST);
 
 	// Main while loop
 	while (!glfwWindowShouldClose(window))
 	{
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shaderProgram.Activate();
-        glUniform1f(uniID, 0.25f);
-        glBindTexture(GL_TEXTURE_2D, texture);
+
+
+        double currentTime = glfwGetTime();
+        if (currentTime - prevTime >= 1 /60)
+        {
+            rotation += 0.5f;
+            prevTime = currentTime;
+        }
+
+        //Defining Matrixes
+        glm::mat4 modelMat = glm::mat4(1.0f);
+        glm::mat4 viewMat = glm::mat4(1.0f);
+        glm::mat4 projectMat = glm::mat4(1.0f);
+
+        modelMat = glm::rotate(modelMat, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+        viewMat = glm::translate(viewMat, glm::vec3(0.0f, -0.5f, -2.0f));
+        projectMat = glm::perspective(glm::radians(45.0f), (float)(width / height), 0.1f, 100.0f);
+
+        //Uniform for Model Matrix
+        int modelLoc = glGetUniformLocation(shaderProgram.ID, "modelMat");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelMat));
+        //Uniform for View Matrix
+        int viewLoc = glGetUniformLocation(shaderProgram.ID, "viewMat");
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMat));
+        //Uniform for Project Matrix
+        int projectLoc = glGetUniformLocation(shaderProgram.ID, "projectMat");
+        glUniformMatrix4fv(projectLoc, 1, GL_FALSE, glm::value_ptr(projectMat));
+
+
+        glUniform1f(uniID, 0.1f);
+        popCat.Bind();
 		VAO1.Bind();
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, sizeof(indices)/sizeof(int), GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -117,7 +137,7 @@ int main()
     VAO1.Delete();
     VBO1.Delete();
     EBO1.Delete();
-    glDeleteTextures(1, &texture);
+    popCat.Delete();
     shaderProgram.Delete();
     glfwDestroyWindow(window);
     glfwTerminate();

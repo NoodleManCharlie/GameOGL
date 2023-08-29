@@ -9,7 +9,7 @@
             "name": "C++ Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/Builds/Win_Build/engine",
+            "program": "${workspaceFolder}/Builds/Win_Build/run",
             "miDebuggerPath": "C:\\MinGW\\bin\\gdb.exe",
             "preLaunchTask": "build",
             "args": [],
